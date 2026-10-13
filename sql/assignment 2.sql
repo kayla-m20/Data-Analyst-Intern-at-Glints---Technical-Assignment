@@ -1,11 +1,8 @@
--- Glints Data Analyst Intern - Assignment 2 : SQL query optimisation, 100% MySQL 8.0
--- Run with:  mysql -uroot --table < assignment2_glints.sql     (tested on MySQL 8.0.46)
 -- What this script does, all in SQL:
---   1. uses schema `glints` 
+--   1. recreates schema `glints` and loads the 3 tables (staff_particulars & recruitment_costs from CSV, salary_grid via INSERT)
 --   2. creates v_original (draft query) and v_optimised (rewrite) as views
---   3. proves the two return the same data (row counts, EXCEPT in both directions, the fan-out bug)
+--   3. proves the two return the same data (row counts, EXCEPT both directions, fan-out bug)
 --   4. benchmarks both on enlarged copies of the data with a stored procedure and stores timings in glints.bench_results
-
 
 -- ====================================================================================================
 -- 1. USE DATABASE
