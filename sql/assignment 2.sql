@@ -1,16 +1,142 @@
 -- Glints Data Analyst Intern - Assignment 2 : SQL query optimisation, 100% MySQL 8.0
 -- Run with:  mysql -uroot --table < assignment2_glints.sql     (tested on MySQL 8.0.46)
 -- What this script does, all in SQL:
---   1. uses schema `glints` (tables already loaded)
+--   1. uses schema `glints` 
 --   2. creates v_original (draft query) and v_optimised (rewrite) as views
 --   3. proves the two return the same data (row counts, EXCEPT in both directions, the fan-out bug)
 --   4. benchmarks both on enlarged copies of the data with a stored procedure and stores timings in glints.bench_results
 
 
 -- ====================================================================================================
--- 1. USE EXISTING DATABASE 
+1. USE DATABASE
 -- ====================================================================================================
 USE glints;
+
+-- Drop views dulu 
+DROP VIEW IF EXISTS v_original;
+DROP VIEW IF EXISTS v_optimised;
+DROP VIEW IF EXISTS v_original_bench;
+DROP VIEW IF EXISTS v_optimised_bench;
+
+-- Drop stored procedure
+DROP PROCEDURE IF EXISTS run_benchmark;
+
+-- Drop semua tabel
+DROP TABLE IF EXISTS staff_particulars;
+DROP TABLE IF EXISTS staff_small;
+DROP TABLE IF EXISTS staff_big;
+DROP TABLE IF EXISTS recruitment_costs;
+DROP TABLE IF EXISTS salary_grid;
+DROP TABLE IF EXISTS bench_results;
+DROP TABLE IF EXISTS staff_particulars_backup;
+
+-- Cek
+SHOW TABLES;
+-- Harus: Empty set
+
+USE glints;
+
+-- Tabel 1: staff_particulars
+CREATE TABLE staff_particulars (
+    `Employee Name` VARCHAR(200),
+    `Employee Number` VARCHAR(30),
+    `State` VARCHAR(10),
+    `Zip` VARCHAR(20),
+    `DOB` VARCHAR(30),
+    `Sex` VARCHAR(20),
+    `MaritalDesc` VARCHAR(30),
+    `CitizenDesc` VARCHAR(50),
+    `Hispanic/Latino` VARCHAR(20),
+    `RaceDesc` VARCHAR(80),
+    `Date of Hire` VARCHAR(30),
+    `Date of Termination` VARCHAR(30),
+    `Reason For Term` VARCHAR(200),
+    `Employment Status` VARCHAR(50),
+    `Department` VARCHAR(80),
+    `Position` VARCHAR(150),
+    `Manager Name` VARCHAR(150),
+    `Employee Source` VARCHAR(150),
+    `Performance Score` VARCHAR(50),
+    `Pay Rate` DECIMAL(8,2)
+);
+
+-- Tabel 2: recruitment_costs
+CREATE TABLE recruitment_costs (
+    `Employment Source` VARCHAR(150),
+    `January` VARCHAR(20),
+    `February` VARCHAR(20),
+    `March` VARCHAR(20),
+    `April` VARCHAR(20),
+    `May` VARCHAR(20),
+    `June` VARCHAR(20),
+    `July` VARCHAR(20),
+    `August` VARCHAR(20),
+    `September` VARCHAR(20),
+    `October` VARCHAR(20),
+    `November` VARCHAR(20),
+    `December` VARCHAR(20),
+    `Total` VARCHAR(20)
+);
+
+-- Tabel 3: salary_grid
+CREATE TABLE salary_grid (
+    `Position` VARCHAR(150),
+    `Salary Min` VARCHAR(20),
+    `Salary Mid` VARCHAR(20),
+    `Salary Max` VARCHAR(20),
+    `Hourly Min` VARCHAR(20),
+    `Hourly Mid` VARCHAR(20),
+    `Hourly Max` VARCHAR(20)
+);
+
+-- Cek
+SHOW TABLES;
+
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/staff_particulars.csv'
+INTO TABLE staff_particulars
+FIELDS TERMINATED BY ','
+OPTIONALLY ENCLOSED BY '"'
+LINES TERMINATED BY '\r\n'
+IGNORE 1 ROWS;
+
+-- Cek
+SELECT COUNT(*) FROM staff_particulars;
+-- Harus: 310
+
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/recruitment_costs.csv'
+INTO TABLE recruitment_costs
+FIELDS TERMINATED BY ','
+OPTIONALLY ENCLOSED BY '"'
+LINES TERMINATED BY '\r\n'
+IGNORE 1 ROWS;
+
+-- Cek
+SELECT COUNT(*) FROM recruitment_costs;
+-- Harus: 22
+
+INSERT INTO salary_grid VALUES
+('Administrative Assistant', '30000', '40000', '50000', '14.42', '19.23', '24.04'),
+('Sr. Administrative Assistant', '35000', '45000', '55000', '16.83', '21.63', '26.44'),
+('Accountant I', '42274', '51425', '62299', '20.32', '24.72', '29.95'),
+('Accountant II', '50490', '62158', '74658', '24.27', '29.88', '35.89'),
+('Sr. Accountant', '63264', '76988', '92454', '30.42', '37.01', '44.45'),
+('Network Engineer', '50845', '66850', '88279', '24.44', '32.14', '42.44'),
+('Sr. Network Engineer', '79428', '99458', '120451', '38.19', '47.82', '57.91'),
+('Database Administrator', '50569', '68306', '93312', '24.31', '32.84', '44.86'),
+('Sr. DBA', '92863', '116007', '139170', '44.65', '55.77', '66.91'),
+('Production Technician I', '30000', '40000', '50000', '14.42', '19.23', '24.04'),
+('Production Technician II', '38000', '48000', '58000', '18.27', '23.08', '27.88'),
+('Lead Production Technician', '45000', '55000', '65000', '21.63', '26.44', '31.25');
+
+-- Cek
+SELECT COUNT(*) FROM salary_grid;
+-- Harus: 12
+
+SELECT 'staff_particulars' AS tabel, COUNT(*) AS rows_count FROM staff_particulars
+UNION ALL
+SELECT 'recruitment_costs', COUNT(*) FROM recruitment_costs
+UNION ALL
+SELECT 'salary_grid', COUNT(*) FROM salary_grid;
 
 
 -- ====================================================================================================
